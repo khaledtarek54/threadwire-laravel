@@ -113,12 +113,15 @@ it('takes the HTTP method in any case, a GET always with its query', function ()
     expect(lastRequest())->method()->toBe('GET')->url()->toBe(API.'/messages?phone=201012345678')->body()->toBe('');
 });
 
-it('starts, reads, checks and resends a verification', function () {
-    $this->answer = fn () => Http::response(['data' => ['id' => 'ver_1', 'status' => 'pending', 'code' => '123456', 'link' => 'https://wa.me/201000000001?text=123456', 'expires_at' => '2026-10-04T10:10:00+00:00']], 201);
+it('verifies by link, by code, and reads, checks, resends and cancels a verification', function () {
+    $this->answer = fn () => Http::response(['data' => ['id' => 'ver_1', 'status' => 'pending', 'code' => '48291376', 'link' => 'https://wa.me/201000000001?text=48291376', 'qr' => 'data:image/png;base64,x', 'expires_at' => '2026-10-04T10:10:00+00:00']], 201);
 
-    expect(Threadwire::createVerification(['instance_id' => 'inst_1', 'to' => '201012345678'], ['idempotency_key' => 'signup-42']))->toHaveKeys(['id', 'status', 'code', 'link', 'expires_at'])
-        ->and(lastRequest())->url()->toBe(API.'/verifications')->data()->toBe(['instance_id' => 'inst_1', 'to' => '201012345678'])
+    expect(Threadwire::verifyByLink('inst_1', ['brand' => 'Acme', 'phone' => '201012345678', 'idempotency_key' => 'signup-42']))->toHaveKeys(['id', 'status', 'code', 'link', 'qr', 'expires_at'])
+        ->and(lastRequest())->url()->toBe(API.'/verifications')->data()->toBe(['instance_id' => 'inst_1', 'channel' => 'link', 'brand' => 'Acme', 'phone' => '201012345678'])
         ->and(lastRequest()->header('Idempotency-Key'))->toBe(['signup-42']);
+
+    Threadwire::sendVerificationCode('inst_1', '201012345678', ['brand' => 'Acme', 'code_length' => 6]);
+    expect(lastRequest()->data())->toBe(['instance_id' => 'inst_1', 'channel' => 'code', 'phone' => '201012345678', 'brand' => 'Acme', 'code_length' => 6]);
 
     Threadwire::verification('ver_1');
     expect(lastRequest())->url()->toBe(API.'/verifications/ver_1')->method()->toBe('GET');
@@ -128,6 +131,21 @@ it('starts, reads, checks and resends a verification', function () {
 
     Threadwire::resendVerification('ver_1');
     expect(lastRequest())->url()->toBe(API.'/verifications/ver_1/resend')->method()->toBe('POST');
+
+    $this->answer = fn () => Http::response(null, 204);
+    Threadwire::cancelVerification('ver_1');
+    expect(lastRequest())->url()->toBe(API.'/verifications/ver_1')->method()->toBe('DELETE');
+});
+
+it('tells how many tries are left after a wrong code', function () {
+    $this->answer = fn () => Http::response(['message' => 'That code is not right.', 'attempts_left' => 3], 422);
+
+    try {
+        Threadwire::checkVerification('ver_1', '000000');
+        $this->fail('A wrong code should throw.');
+    } catch (ValidationException $e) {
+        expect($e->attemptsLeft())->toBe(3)->and($e->getMessage())->toBe('That code is not right.');
+    }
 });
 
 it('throws Threadwire\'s own reason, typed by status, with the fields and when to retry', function () {

@@ -191,16 +191,49 @@ class ThreadwireClient
     }
 
     /**
-     * Starts a verification (a one-time code by WhatsApp). The verifications
-     * endpoints are new: these four follow their announced shape.
+     * Verify with WhatsApp, the recommended way: the person sends you the
+     * code from the number they claim, so your number only ever replies.
+     * Show `link` as a button on a phone (or `qr` on a computer), with `code`
+     * as a fallback; a `verification.completed` webhook brings the phone.
      *
-     * @param  array<string, mixed>  $data  as POST /v1/verifications takes it (instance_id, to…)
+     * @param  array{phone?: string, brand?: string, reference?: string, locale?: string, expires_in?: int, idempotency_key?: string}  $options
+     * @return array<string, mixed> id, status, code, link, qr, expires_at
+     */
+    public function verifyByLink(string $instanceId, array $options = []): array
+    {
+        return $this->createVerification(['instance_id' => $instanceId, 'channel' => 'link', ...array_diff_key($options, ['idempotency_key' => true])], array_intersect_key($options, ['idempotency_key' => true]));
+    }
+
+    /**
+     * Verify with WhatsApp by a code your number sends; check what the person
+     * types with checkVerification(). It never waits: if it cannot go at once
+     * (night hours, the day's limit), the verification fails with the reason.
+     *
+     * @param  array{brand?: string, code_length?: int, reference?: string, locale?: string, expires_in?: int, idempotency_key?: string}  $options
+     * @return array<string, mixed> id, status, expires_at (never the code)
+     */
+    public function sendVerificationCode(string $instanceId, string $phone, array $options = []): array
+    {
+        return $this->createVerification(['instance_id' => $instanceId, 'channel' => 'code', 'phone' => $phone, ...array_diff_key($options, ['idempotency_key' => true])], array_intersect_key($options, ['idempotency_key' => true]));
+    }
+
+    /**
+     * Starts a verification with the fields as POST /v1/verifications takes
+     * them (instance_id, channel "link" or "code", phone…).
+     *
+     * @param  array<string, mixed>  $data
      * @param  array{idempotency_key?: string}  $options
-     * @return array<string, mixed> id, status, expires_at, and in the link flow the code and the link the person opens to send it
+     * @return array<string, mixed>
      */
     public function createVerification(array $data, array $options = []): array
     {
         return $this->data('post', 'verifications', $data, $options['idempotency_key'] ?? null);
+    }
+
+    /** Cancels a pending verification; a code not sent yet is not sent. */
+    public function cancelVerification(string $id): void
+    {
+        $this->call('delete', 'verifications/'.rawurlencode($id));
     }
 
     /** @return array<string, mixed> */
@@ -210,9 +243,11 @@ class ThreadwireClient
     }
 
     /**
-     * Checks the code the person typed.
+     * Checks the code the person typed: the verification, `verified`. A wrong
+     * code throws a ValidationException ($e->attemptsLeft()); one that is
+     * expired, failed or used throws a ConflictException.
      *
-     * @return array<string, mixed> the verification, with its status
+     * @return array<string, mixed>
      */
     public function checkVerification(string $id, string $code): array
     {

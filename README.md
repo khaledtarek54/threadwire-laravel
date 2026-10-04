@@ -11,7 +11,7 @@ The official Laravel package for [Threadwire](https://threadwire.tri-tech.net), 
 - **Receive webhooks as Laravel events**: replies, delivery and read receipts, reactions and more, with the signature checked for you.
 - **Protected by default**: every message goes through Threadwire's pacing, warm-up and daily limits, so a number is far less likely to be banned. A message that would put the number at risk is held or refused, with the reason.
 
-Requires PHP 8.2+ and Laravel 12 or 13.
+Requires PHP 8.2+ and Laravel 12 or 13, and a [Threadwire](https://threadwire.tri-tech.net) account (7 days free).
 
 ## Install
 
@@ -77,15 +77,32 @@ Threadwire::instance($numberId)['protection'];      // where the number stands t
 Threadwire::chats(['waiting' => 1]);                // chats waiting for your reply
 ```
 
-Verifications (a one-time code by WhatsApp), for the verifications API as it is announced; check the [API reference](https://threadwire.tri-tech.net/docs/api) that your account has it:
+### Verify with WhatsApp
+
+Prove someone holds a WhatsApp number, for a sign-up or a password-free sign-in. Use the link unless you must send the code yourself: the person sends you the code, so your number only replies (the safest message there is, with no night hours or daily limit).
 
 ```php
-$verification = Threadwire::createVerification(['instance_id' => $numberId, 'to' => '201012345678']);
-// id, status, expires_at; in the link flow also the code and the link the person opens to send it
+// 1. The link (recommended)
+$verification = Threadwire::verifyByLink($numberId, ['brand' => 'Acme', 'reference' => 'signup-7', 'phone' => $phone]);
+// show $verification['link'] as a button (or $verification['qr'] on a computer), $verification['code'] as a fallback
 
-Threadwire::checkVerification($verification['id'], $request->input('code'));
-Threadwire::verification($verification['id']);
+// then, in a listener:
+Event::listen(\Threadwire\Events\VerificationCompleted::class, function ($event) {
+    $phone = $event->payload['data']['phone'];   // sign in by this; never by a null phone
+});
+
+// 2. A code your number sends
+$verification = Threadwire::sendVerificationCode($numberId, '201012345678', ['brand' => 'Acme']);
+
+try {
+    Threadwire::checkVerification($verification['id'], $request->input('code'));   // status: verified
+} catch (\Threadwire\Exceptions\ValidationException $e) {
+    $e->attemptsLeft();   // wrong code; after the fifth it fails
+}
+
+Threadwire::verification($verification['id']);       // status, phone, attempts left; never the code
 Threadwire::resendVerification($verification['id']);
+Threadwire::cancelVerification($verification['id']);
 ```
 
 Anything else in the API: `Threadwire::json('get', 'instances/'.$numberId.'/groups')`, or `Threadwire::call(...)` for the raw response. Single items come back as the array under `data`; lists come back whole (`data`, `links`, `meta`). The full reference is at <https://threadwire.tri-tech.net/docs/api>.

@@ -29,6 +29,8 @@ class WebhookController
         'call.received' => Events\CallReceived::class,
         'call.rejected' => Events\CallRejected::class,
         'instance.status' => Events\InstanceStatusUpdated::class,
+        'verification.completed' => Events\VerificationCompleted::class,
+        'verification.failed' => Events\VerificationFailed::class,
         'webhook.test' => Events\WebhookTested::class,
     ];
 

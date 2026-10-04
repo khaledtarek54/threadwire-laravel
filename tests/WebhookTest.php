@@ -5,6 +5,7 @@ use Illuminate\Testing\TestResponse;
 use Threadwire\Events\InstanceStatusUpdated;
 use Threadwire\Events\MessageReceived;
 use Threadwire\Events\MessageStatusUpdated;
+use Threadwire\Events\VerificationCompleted;
 use Threadwire\Events\WebhookReceived;
 use Threadwire\Tests\TestCase;
 use Threadwire\Webhooks\WebhookSignature;
@@ -142,4 +143,12 @@ it('can be put on a route of your own with the threadwire.webhook middleware', f
 
     $this->call('POST', '/my/hooks', server: $server, content: $body)->assertOk();
     $this->call('POST', '/my/hooks', server: ['CONTENT_TYPE' => 'application/json'], content: $body)->assertUnauthorized();
+});
+
+it('turns a completed verification into its own event', function () {
+    Event::fake();
+
+    threadwireEvent('verification.completed', ['id' => 'ver_1', 'reference' => 'signup-7', 'phone' => '201012345678'])->assertNoContent();
+
+    Event::assertDispatched(VerificationCompleted::class, fn ($event) => $event->payload['data']['phone'] === '201012345678');
 });
