@@ -2,7 +2,7 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
-## 1.1.0 — Unreleased
+## 1.1.0 — 2026-10-04
 
 - `Threadwire::events()`: poll for the webhook's events (`GET /v1/events`), oldest first after a cursor (`after`, `next_after`, `has_more`), with `types` and `instance_id` filters; for systems without a public webhook address, and to catch up on missed events.
 - `Threadwire::chatHistory()`: a chat's history from the linked phone, newest first.
