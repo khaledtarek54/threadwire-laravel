@@ -1,8 +1,17 @@
 # Threadwire for Laravel
 
-Send WhatsApp messages from your Laravel app through your own linked numbers, and receive [Threadwire](https://threadwire.tri-tech.net)'s webhooks as Laravel events, verified for you. Every call is the Threadwire API, so messages are paced and your numbers protected as always.
+[![Tests](https://github.com/khaledtarek54/threadwire-laravel/actions/workflows/tests.yml/badge.svg)](https://github.com/khaledtarek54/threadwire-laravel/actions/workflows/tests.yml)
+[![Latest release](https://img.shields.io/github/v/release/khaledtarek54/threadwire-laravel?sort=semver)](https://github.com/khaledtarek54/threadwire-laravel/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-PHP 8.2+, Laravel 11, 12 or 13.
+The official Laravel package for [Threadwire](https://threadwire.tri-tech.net), the WhatsApp API that keeps your numbers safe.
+
+- **Send** texts, files, locations, contact cards and polls from your own linked WhatsApp numbers, to a person or a group, in one line.
+- **Verify phone numbers with WhatsApp**: a one-tap link where the person sends you the code (the safest message there is), or a classic code.
+- **Receive webhooks as Laravel events**: replies, delivery and read receipts, reactions and more, with the signature checked for you.
+- **Protected by default**: every message goes through Threadwire's pacing, warm-up and daily limits, so a number is far less likely to be banned. A message that would put the number at risk is held or refused, with the reason.
+
+Requires PHP 8.2+ and Laravel 12 or 13.
 
 ## Install
 
@@ -10,16 +19,12 @@ PHP 8.2+, Laravel 11, 12 or 13.
 composer require tritech/threadwire-laravel
 ```
 
-Until it is on Packagist, copy this folder into your project (say, `packages/threadwire-laravel`), add it as a path repository in your `composer.json`, and require it from there:
+Until it is listed on Packagist, add this repository to your app's `composer.json` first:
 
 ```json
 "repositories": [
-    { "type": "path", "url": "packages/threadwire-laravel" }
+    { "type": "vcs", "url": "https://github.com/khaledtarek54/threadwire-laravel" }
 ]
-```
-
-```sh
-composer require tritech/threadwire-laravel:@dev
 ```
 
 Laravel finds the service provider and the `Threadwire` facade on its own.

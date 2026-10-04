@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Threadwire API question or account help
+    url: https://threadwire.tri-tech.net/docs/api
+    about: The API reference, and how to reach us.
+  - name: Security problem
+    url: https://github.com/khaledtarek54/threadwire-laravel/security/policy
+    about: Please report privately.

@@ -1,10 +1,25 @@
 {
     "name": "tritech/threadwire-laravel",
-    "description": "Threadwire for Laravel: send WhatsApp messages through your own linked numbers, with Threadwire's ban protection, and receive its signed webhooks as Laravel events.",
+    "description": "Official Laravel package for Threadwire: send WhatsApp messages through your own linked numbers with built-in ban protection, verify phone numbers with WhatsApp, and receive signed webhooks as Laravel events.",
     "type": "library",
     "license": "MIT",
-    "keywords": ["threadwire", "whatsapp", "laravel", "webhooks", "standard-webhooks"],
+    "keywords": [
+        "threadwire",
+        "whatsapp",
+        "whatsapp-api",
+        "laravel",
+        "laravel-package",
+        "otp",
+        "phone-verification",
+        "webhooks",
+        "standard-webhooks"
+    ],
     "homepage": "https://threadwire.tri-tech.net",
+    "support": {
+        "issues": "https://github.com/khaledtarek54/threadwire-laravel/issues",
+        "source": "https://github.com/khaledtarek54/threadwire-laravel",
+        "docs": "https://threadwire.tri-tech.net/docs/api"
+    },
     "authors": [
         {
             "name": "TriTech Solutions",
@@ -13,14 +28,15 @@
     ],
     "require": {
         "php": "^8.2",
-        "illuminate/contracts": "^11.0|^12.0|^13.0",
-        "illuminate/http": "^11.0|^12.0|^13.0",
-        "illuminate/routing": "^11.0|^12.0|^13.0",
-        "illuminate/support": "^11.0|^12.0|^13.0"
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/http": "^12.0|^13.0",
+        "illuminate/routing": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^9.0|^10.0|^11.0",
-        "pestphp/pest": "^3.0|^4.0|^5.0"
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0"
     },
     "autoload": {
         "psr-4": {
@@ -43,7 +59,9 @@
         }
     },
     "scripts": {
-        "test": "pest"
+        "test": "pest",
+        "format": "pint",
+        "lint": "pint --test"
     },
     "config": {
         "sort-packages": true,
