@@ -1,7 +1,8 @@
 # Threadwire for Laravel
 
 [![Tests](https://github.com/khaledtarek54/threadwire-laravel/actions/workflows/tests.yml/badge.svg)](https://github.com/khaledtarek54/threadwire-laravel/actions/workflows/tests.yml)
-[![Latest release](https://img.shields.io/github/v/release/khaledtarek54/threadwire-laravel?sort=semver)](https://github.com/khaledtarek54/threadwire-laravel/releases)
+[![Latest version](https://img.shields.io/packagist/v/tritech/threadwire-laravel)](https://packagist.org/packages/tritech/threadwire-laravel)
+[![Downloads](https://img.shields.io/packagist/dt/tritech/threadwire-laravel)](https://packagist.org/packages/tritech/threadwire-laravel)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 The official Laravel package for [Threadwire](https://threadwire.tri-tech.net), the WhatsApp API that keeps your numbers safe.
@@ -17,14 +18,6 @@ Requires PHP 8.2+ and Laravel 12 or 13, and a [Threadwire](https://threadwire.tr
 
 ```sh
 composer require tritech/threadwire-laravel
-```
-
-Until it is listed on Packagist, add this repository to your app's `composer.json` first:
-
-```json
-"repositories": [
-    { "type": "vcs", "url": "https://github.com/khaledtarek54/threadwire-laravel" }
-]
 ```
 
 Laravel finds the service provider and the `Threadwire` facade on its own.
