@@ -2,7 +2,7 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
-## 1.2.0 — Unreleased
+## 1.2.0 — 2026-10-05
 
 - Broadcasts: `Threadwire::createBroadcast()` (to everyone who wrote recently, a chat label, or your own list filtered to people who wrote, with placeholders), `broadcast()`, `broadcasts()`, `pauseBroadcast()`, `resumeBroadcast()` and `cancelBroadcast()`.
 - Webhook events `broadcast.paused` and `broadcast.completed`, as `Threadwire\Events\BroadcastPaused` and `Threadwire\Events\BroadcastCompleted`.
