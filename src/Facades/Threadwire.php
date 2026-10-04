@@ -19,6 +19,8 @@ use Threadwire\ThreadwireClient;
  * @method static array instances(array $query = [])
  * @method static array instance(string $id)
  * @method static array chats(array $query = [])
+ * @method static array chatHistory(string $instanceId, string $phone, array $query = [])
+ * @method static array events(array $query = [])
  * @method static array createVerification(array $data, array $options = [])
  * @method static array verification(string $id)
  * @method static array checkVerification(string $id, string $code)

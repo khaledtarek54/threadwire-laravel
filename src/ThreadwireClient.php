@@ -191,6 +191,33 @@ class ThreadwireClient
     }
 
     /**
+     * A chat's history from the phone, newest first (also from before
+     * Threadwire): limit, offset. Only with someone the number knows.
+     *
+     * @param  array<string, mixed>  $query
+     * @return array<string, mixed>
+     */
+    public function chatHistory(string $instanceId, string $phone, array $query = []): array
+    {
+        return $this->json('get', 'instances/'.rawurlencode($instanceId).'/chats/'.rawurlencode($phone).'/history', $query);
+    }
+
+    /**
+     * The webhook's events, for polling instead of (or as well as) a webhook:
+     * oldest first, each exactly as a webhook carries it (id, type,
+     * created_at, data). Pass 'after' => the last answer's next_after to get
+     * only newer ones; ask again at once while has_more is true. Also types
+     * (a list) and instance_id, limit up to 100.
+     *
+     * @param  array{after?: string|null, limit?: int, types?: list<string>, instance_id?: string}  $query
+     * @return array{data: list<array<string, mixed>>, next_after: string|null, has_more: bool}
+     */
+    public function events(array $query = []): array
+    {
+        return $this->json('get', 'events', array_filter($query, fn ($value) => $value !== null));
+    }
+
+    /**
      * Verify with WhatsApp, the recommended way: the person sends you the
      * code from the number they claim, so your number only ever replies.
      * Show `link` as a button on a phone (or `qr` on a computer), with `code`

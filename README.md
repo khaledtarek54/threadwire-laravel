@@ -68,6 +68,25 @@ Threadwire::deleteMessage($id);                     // a sent message, deleted f
 Threadwire::instances();                            // your numbers
 Threadwire::instance($numberId)['protection'];      // where the number stands today: new people left, warm-up, safety score
 Threadwire::chats(['waiting' => 1]);                // chats waiting for your reply
+Threadwire::chatHistory($numberId, '201012345678'); // the chat's history from the phone, newest first
+```
+
+### Poll for events instead of a webhook
+
+No public address for a webhook (a server behind a firewall, a script on a schedule), or catching up after downtime? Poll: you get the same events, in the same shape, oldest first. Keep `next_after` and pass it back; ask again at once while `has_more` is true, otherwise wait a few seconds. An event your webhook also got has the same `id`, so skip ids you have handled.
+
+```php
+$after = Cache::get('threadwire-after');   // null the first time: from the oldest kept (30 days)
+
+do {
+    $page = Threadwire::events(['after' => $after, 'types' => ['message.received']]);
+
+    foreach ($page['data'] as $event) {
+        // $event['id'], $event['type'], $event['created_at'], $event['data']
+    }
+
+    Cache::forever('threadwire-after', $after = $page['next_after']);
+} while ($page['has_more']);
 ```
 
 ### Verify with WhatsApp

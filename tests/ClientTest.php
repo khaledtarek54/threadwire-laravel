@@ -85,6 +85,22 @@ it('reads messages, numbers with their protection, and chats', function () {
     expect(lastRequest()->url())->toBe(API.'/messages/msg_1');
 });
 
+it('polls for events after a cursor, until there are no more', function () {
+    $this->answer = fn (Request $request) => str_contains($request->url(), 'after=evt_2')
+        ? Http::response(['data' => [], 'next_after' => 'evt_2', 'has_more' => false])
+        : Http::response(['data' => [['id' => 'evt_1', 'type' => 'message.received', 'created_at' => '2026-10-04T10:00:00+00:00', 'data' => []], ['id' => 'evt_2', 'type' => 'message.status', 'created_at' => '2026-10-04T10:00:01+00:00', 'data' => []]], 'next_after' => 'evt_2', 'has_more' => false]);
+
+    $first = Threadwire::events(['after' => null, 'types' => ['message.received', 'message.status']]);
+    expect(array_column($first['data'], 'id'))->toBe(['evt_1', 'evt_2'])
+        ->and(urldecode(lastRequest()->url()))->toBe(API.'/events?types[0]=message.received&types[1]=message.status');
+
+    expect(Threadwire::events(['after' => $first['next_after']]))->toBe(['data' => [], 'next_after' => 'evt_2', 'has_more' => false])
+        ->and(lastRequest()->url())->toBe(API.'/events?after=evt_2');
+
+    Threadwire::chatHistory('inst_1', '201012345678', ['limit' => 20]);
+    expect(lastRequest()->url())->toBe(API.'/instances/inst_1/chats/201012345678/history?limit=20');
+});
+
 it('cancels a message: removed when scheduled, kept as failed when queued', function () {
     $this->answer = fn (Request $request) => $request->method() === 'GET' ? Http::response(['data' => ['id' => 'msg_1', 'status' => 'scheduled']]) : Http::response(null, 204);
     expect(Threadwire::cancelMessage('msg_1'))->toBeNull()
