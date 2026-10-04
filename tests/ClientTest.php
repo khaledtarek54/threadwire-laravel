@@ -192,6 +192,46 @@ it('throws Threadwire\'s own reason, typed by status, with the fields and when t
     expect(fn () => Threadwire::instances())->toThrow(ThreadwireException::class, 'Threadwire answered 502.');
 });
 
+it('starts a broadcast to recent chats, a label or a list of phones and people, with an idempotency key', function () {
+    $this->answer = fn () => Http::response(['data' => ['id' => 'brd_1', 'status' => 'running']], 201);
+
+    expect(Threadwire::createBroadcast('inst_1', 'Hi {name}', 'recent', ['days' => 14, 'idempotency_key' => 'autumn']))->toBe(['id' => 'brd_1', 'status' => 'running'])
+        ->and(lastRequest())
+        ->url()->toBe(API.'/broadcasts')
+        ->method()->toBe('POST')
+        ->data()->toBe(['instance_id' => 'inst_1', 'text' => 'Hi {name}', 'audience' => 'recent', 'days' => 14])
+        ->and(lastRequest()->header('Idempotency-Key'))->toBe(['autumn']);
+
+    Threadwire::createBroadcast('inst_1', 'Hi {name}, {city}', ['201012345678', ['phone' => '201098765432', 'name' => 'Mona', 'fields' => ['city' => 'Giza']]]);
+    expect(lastRequest()->data())->toBe(['instance_id' => 'inst_1', 'text' => 'Hi {name}, {city}', 'audience' => 'phones', 'recipients' => [
+        ['phone' => '201012345678'],
+        ['phone' => '201098765432', 'name' => 'Mona', 'fields' => ['city' => 'Giza']],
+    ]]);
+
+    Threadwire::createBroadcast('inst_1', 'Hi {name}', 'label', ['label_id' => 3]);
+    expect(lastRequest()->data())->toMatchArray(['audience' => 'label', 'label_id' => 3]);
+});
+
+it('reads, lists, pauses, resumes and cancels broadcasts, and says why one cannot resume', function () {
+    $this->answer = fn () => Http::response(['data' => ['id' => 'brd_1', 'status' => 'paused']]);
+
+    Threadwire::broadcast('brd_1');
+    expect(lastRequest())->url()->toBe(API.'/broadcasts/brd_1')->method()->toBe('GET');
+
+    Threadwire::broadcasts(['status' => 'running']);
+    expect(lastRequest()->url())->toBe(API.'/broadcasts?status=running');
+
+    Threadwire::pauseBroadcast('brd_1');
+    expect(lastRequest())->url()->toBe(API.'/broadcasts/brd_1/pause')->method()->toBe('POST');
+
+    Threadwire::cancelBroadcast('brd_1');
+    expect(lastRequest())->url()->toBe(API.'/broadcasts/brd_1')->method()->toBe('DELETE');
+
+    $this->answer = fn () => Http::response(['message' => 'WhatsApp warned this number or is limiting it.'], 409);
+    expect(fn () => Threadwire::resumeBroadcast('brd_1'))->toThrow(ConflictException::class, 'WhatsApp warned this number');
+    expect(lastRequest()->url())->toBe(API.'/broadcasts/brd_1/resume');
+});
+
 it('never sends a request without an API key', function () {
     $client = new ThreadwireClient(app(Factory::class), null, API);
 

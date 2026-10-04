@@ -25,6 +25,12 @@ use Threadwire\ThreadwireClient;
  * @method static array verification(string $id)
  * @method static array checkVerification(string $id, string $code)
  * @method static array resendVerification(string $id)
+ * @method static array createBroadcast(string $instanceId, string $text, string|array $audience, array $options = [])
+ * @method static array broadcast(string $id)
+ * @method static array broadcasts(array $query = [])
+ * @method static array pauseBroadcast(string $id)
+ * @method static array resumeBroadcast(string $id)
+ * @method static array cancelBroadcast(string $id)
  * @method static array json(string $method, string $path, array $data = [], ?string $idempotencyKey = null)
  * @method static \Illuminate\Http\Client\Response call(string $method, string $path, array $data = [], ?string $idempotencyKey = null)
  *

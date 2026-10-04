@@ -8,6 +8,7 @@
 The official Laravel package for [Threadwire](https://threadwire.tri-tech.net), the WhatsApp API that keeps your numbers safe.
 
 - **Send** texts, files, locations, contact cards and polls from your own linked WhatsApp numbers, to a person or a group, in one line.
+- **Broadcasts**: one message to many people who wrote to you, each sent on its own, paced, with an opt-out line, pausing by itself if the number is at risk.
 - **Verify phone numbers with WhatsApp**: a one-tap link where the person sends you the code (the safest message there is), or a classic code.
 - **Receive webhooks as Laravel events**: replies, delivery and read receipts, reactions and more, with the signature checked for you.
 - **Protected by default**: every message goes through Threadwire's pacing, warm-up and daily limits, so a number is far less likely to be banned. A message that would put the number at risk is held or refused, with the reason.
@@ -116,6 +117,28 @@ Threadwire::verification($verification['id']);       // status, phone, attempts 
 Threadwire::resendVerification($verification['id']);
 Threadwire::cancelVerification($verification['id']);
 ```
+
+### Broadcasts
+
+One message to many people who opted in: people who wrote to your number. Each gets their own message, one at a time, in daytime, with an opt-out line added, and the broadcast pauses by itself if WhatsApp warns the number or too many people reply STOP. A list is filtered to people who wrote; `left_out` says who was not, and why.
+
+```php
+// Everyone who wrote in the last 14 days
+$broadcast = Threadwire::createBroadcast($numberId, 'Hi {name}, our autumn menu starts today.', 'recent', ['days' => 14, 'idempotency_key' => 'autumn-menu']);
+
+// Your own list, with fields for placeholders
+Threadwire::createBroadcast($numberId, 'Hi {name}, {city} has a new branch.', [
+    ['phone' => '201012345678', 'name' => 'Mona', 'fields' => ['city' => 'Giza']],
+    '201098765432',
+], ['interval_seconds' => 90, 'per_day' => 150]);
+
+Threadwire::broadcast($broadcast['id']);         // status, reason when paused, progress
+Threadwire::pauseBroadcast($broadcast['id']);
+Threadwire::resumeBroadcast($broadcast['id']);   // a ConflictException says what still stops it
+Threadwire::cancelBroadcast($broadcast['id']);
+```
+
+Listen for `Threadwire\Events\BroadcastPaused` (with `reason.code` and `reason.text`) and `Threadwire\Events\BroadcastCompleted`.
 
 Anything else in the API: `Threadwire::json('get', 'instances/'.$numberId.'/groups')`, or `Threadwire::call(...)` for the raw response. Single items come back as the array under `data`; lists come back whole (`data`, `links`, `meta`). The full reference is at <https://threadwire.tri-tech.net/docs/api>.
 

@@ -288,6 +288,78 @@ class ThreadwireClient
     }
 
     /**
+     * Starts a broadcast: one message to many people who opted in, each sent
+     * as their own message, one at a time, with an opt-out line, pausing by
+     * itself if the number is at risk. $audience is "recent" (everyone who
+     * wrote within options' days), "label" (options' label_id) or a list of
+     * recipients: phones, or arrays of phone, name and fields. A list is
+     * filtered to people who wrote to the number; left_out says who was not.
+     *
+     * @param  string|list<string|array{phone: string, name?: string, fields?: array<string, string>}>  $audience
+     * @param  array{name?: string, language?: string, days?: int, label_id?: int, include_saved_contacts?: bool, media?: array<string, string>, interval_seconds?: int, per_day?: int, start_at?: string, idempotency_key?: string}  $options
+     * @return array<string, mixed> the broadcast: id, status, progress, left_out, warnings
+     */
+    public function createBroadcast(string $instanceId, string $text, string|array $audience, array $options = []): array
+    {
+        $who = is_string($audience)
+            ? ['audience' => $audience]
+            : ['audience' => 'phones', 'recipients' => array_map(fn (string|array $person): array => is_string($person) ? ['phone' => $person] : $person, array_values($audience))];
+
+        return $this->data('post', 'broadcasts', [
+            'instance_id' => $instanceId,
+            'text' => $text,
+            ...$who,
+            ...array_diff_key($options, ['idempotency_key' => true]),
+        ], $options['idempotency_key'] ?? null);
+    }
+
+    /**
+     * One broadcast: status (draft, scheduled, running, paused, completed,
+     * cancelled), reason when paused, and progress.
+     *
+     * @return array<string, mixed>
+     */
+    public function broadcast(string $id): array
+    {
+        return $this->data('get', 'broadcasts/'.rawurlencode($id));
+    }
+
+    /**
+     * Your broadcasts, newest first: instance_id, status, page.
+     *
+     * @param  array<string, mixed>  $query
+     * @return array<string, mixed>
+     */
+    public function broadcasts(array $query = []): array
+    {
+        return $this->json('get', 'broadcasts', $query);
+    }
+
+    /** @return array<string, mixed> the broadcast, paused */
+    public function pauseBroadcast(string $id): array
+    {
+        return $this->data('post', 'broadcasts/'.rawurlencode($id).'/pause');
+    }
+
+    /**
+     * Resumes a paused broadcast. One that paused itself to protect the
+     * number resumes only once the reason has cleared: until then this
+     * throws a ConflictException saying what still stops it.
+     *
+     * @return array<string, mixed>
+     */
+    public function resumeBroadcast(string $id): array
+    {
+        return $this->data('post', 'broadcasts/'.rawurlencode($id).'/resume');
+    }
+
+    /** @return array<string, mixed> the broadcast, cancelled: nobody else gets it */
+    public function cancelBroadcast(string $id): array
+    {
+        return $this->data('delete', 'broadcasts/'.rawurlencode($id));
+    }
+
+    /**
      * Any other endpoint, by its path under /v1: the answer, decoded.
      *
      * @param  array<string, mixed>  $data  the query for a GET, the JSON body otherwise

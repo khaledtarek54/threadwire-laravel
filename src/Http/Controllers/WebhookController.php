@@ -31,6 +31,8 @@ class WebhookController
         'instance.status' => Events\InstanceStatusUpdated::class,
         'verification.completed' => Events\VerificationCompleted::class,
         'verification.failed' => Events\VerificationFailed::class,
+        'broadcast.paused' => Events\BroadcastPaused::class,
+        'broadcast.completed' => Events\BroadcastCompleted::class,
         'webhook.test' => Events\WebhookTested::class,
     ];
 

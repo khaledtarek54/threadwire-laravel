@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Testing\TestResponse;
+use Threadwire\Events\BroadcastCompleted;
+use Threadwire\Events\BroadcastPaused;
 use Threadwire\Events\InstanceStatusUpdated;
 use Threadwire\Events\MessageReceived;
 use Threadwire\Events\MessageStatusUpdated;
@@ -151,4 +153,14 @@ it('turns a completed verification into its own event', function () {
     threadwireEvent('verification.completed', ['id' => 'ver_1', 'reference' => 'signup-7', 'phone' => '201012345678'])->assertNoContent();
 
     Event::assertDispatched(VerificationCompleted::class, fn ($event) => $event->payload['data']['phone'] === '201012345678');
+});
+
+it('turns a broadcast pausing or finishing into its own event, with the reason', function () {
+    Event::fake();
+
+    threadwireEvent('broadcast.paused', ['id' => 'brd_1', 'status' => 'paused', 'reason' => ['code' => 'opt_outs', 'text' => 'More than 2% asked to stop.']])->assertNoContent();
+    threadwireEvent('broadcast.completed', ['id' => 'brd_1', 'status' => 'completed', 'reason' => null])->assertNoContent();
+
+    Event::assertDispatched(BroadcastPaused::class, fn ($event) => $event->payload['data']['reason']['code'] === 'opt_outs');
+    Event::assertDispatched(BroadcastCompleted::class, fn ($event) => $event->payload['data']['id'] === 'brd_1');
 });
