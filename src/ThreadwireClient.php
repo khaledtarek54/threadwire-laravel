@@ -192,7 +192,7 @@ class ThreadwireClient
 
     /**
      * A chat's history from the phone, newest first (also from before
-     * Threadwire): limit, offset. Only with someone the number knows.
+     * Threadwire, about a day before linking): limit, offset. Only a chat the number has.
      *
      * @param  array<string, mixed>  $query
      * @return array<string, mixed>
