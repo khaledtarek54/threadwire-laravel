@@ -15,6 +15,7 @@ use Threadwire\ThreadwireClient;
  * @method static array message(string $id)
  * @method static array messages(array $query = [])
  * @method static array|null cancelMessage(string $id)
+ * @method static array|null deleteMessage(string $id)
  * @method static array instances(array $query = [])
  * @method static array instance(string $id)
  * @method static array chats(array $query = [])

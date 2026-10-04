@@ -65,13 +65,14 @@ Read and cancel:
 ```php
 Threadwire::message($id);                           // its status, and the reason in "error" if it failed
 Threadwire::messages(['phone' => '201012345678']);  // newest first; "links.next" for older ones
-Threadwire::cancelMessage($id);                     // before it goes: null when it was scheduled
+Threadwire::cancelMessage($id);                     // only while it waits: null when it was scheduled; a ConflictException once it went
+Threadwire::deleteMessage($id);                     // a sent message, deleted for everyone in the chat (within about two days)
 Threadwire::instances();                            // your numbers
 Threadwire::instance($numberId)['protection'];      // where the number stands today: new people left, warm-up, safety score
 Threadwire::chats(['waiting' => 1]);                // chats waiting for your reply
 ```
 
-Verifications (a one-time code by WhatsApp):
+Verifications (a one-time code by WhatsApp), for the verifications API as it is announced; check the [API reference](https://threadwire.tri-tech.net/docs/api) that your account has it:
 
 ```php
 $verification = Threadwire::createVerification(['instance_id' => $numberId, 'to' => '201012345678']);
@@ -152,7 +153,7 @@ class AnswerCustomer implements ShouldQueue
 - **Answer within 15 seconds:** make slow listeners queued (`ShouldQueue`), as above. Anything but a 2xx is retried, for about a day.
 - **Events can arrive out of order:** use `createdAt` and the message's own times.
 - **Several secrets:** an instance with its own webhook URL has its own secret. List them comma-separated in `THREADWIRE_WEBHOOK_SECRET` when they post to the same app. After you make a new secret in the panel, events carry both signatures for 24 hours, so either secret verifies meanwhile.
-- **Your own route:** set `THREADWIRE_WEBHOOK_PATH=` (empty) and put the `threadwire.webhook` middleware on a route of yours instead.
+- **Your own route:** set `THREADWIRE_WEBHOOK_PATH=` (empty) and put the `threadwire.webhook` middleware on a route of yours instead. If you publish the config, keep its `webhook.path` key: without it no route is registered.
 - `Threadwire\Webhooks\WebhookSignature` checks a signature anywhere else: `(new WebhookSignature($secret))->verify($id, $timestamp, $signatures, $rawBody)`.
 
 ## Testing your app

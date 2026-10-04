@@ -86,12 +86,31 @@ it('reads messages, numbers with their protection, and chats', function () {
 });
 
 it('cancels a message: removed when scheduled, kept as failed when queued', function () {
-    $this->answer = fn () => Http::response(null, 204);
+    $this->answer = fn (Request $request) => $request->method() === 'GET' ? Http::response(['data' => ['id' => 'msg_1', 'status' => 'scheduled']]) : Http::response(null, 204);
     expect(Threadwire::cancelMessage('msg_1'))->toBeNull()
         ->and(lastRequest()->method())->toBe('DELETE');
 
-    $this->answer = fn () => Http::response(['data' => ['id' => 'msg_2', 'status' => 'failed', 'error' => 'Cancelled before it was sent.']]);
+    $this->answer = fn (Request $request) => $request->method() === 'GET' ? Http::response(['data' => ['id' => 'msg_2', 'status' => 'queued']]) : Http::response(['data' => ['id' => 'msg_2', 'status' => 'failed', 'error' => 'Cancelled before it was sent.']]);
     expect(Threadwire::cancelMessage('msg_2'))->toMatchArray(['status' => 'failed']);
+});
+
+it('never deletes a sent message for everyone when asked only to cancel it', function () {
+    $this->answer = fn () => Http::response(['data' => ['id' => 'msg_3', 'status' => 'delivered']]);
+
+    expect(fn () => Threadwire::cancelMessage('msg_3'))->toThrow(ConflictException::class, 'This message is no longer waiting (it is delivered), so it can no longer be cancelled.');
+    Http::assertNotSent(fn (Request $request) => $request->method() === 'DELETE');
+
+    $this->answer = fn () => Http::response(['data' => ['id' => 'msg_3', 'status' => 'delivered']], 202);
+    Threadwire::deleteMessage('msg_3');
+    expect(lastRequest())->method()->toBe('DELETE')->url()->toBe(API.'/messages/msg_3');
+});
+
+it('takes the HTTP method in any case, a GET always with its query', function () {
+    $this->answer = fn () => Http::response(['data' => []]);
+
+    Threadwire::json('GET', 'messages', ['phone' => '201012345678']);
+
+    expect(lastRequest())->method()->toBe('GET')->url()->toBe(API.'/messages?phone=201012345678')->body()->toBe('');
 });
 
 it('starts, reads, checks and resends a verification', function () {

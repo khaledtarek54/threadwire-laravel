@@ -6,6 +6,7 @@ use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Threadwire\Exceptions\AuthenticationException;
+use Threadwire\Exceptions\ConflictException;
 use Threadwire\Exceptions\ThreadwireException;
 
 /**
@@ -123,9 +124,33 @@ class ThreadwireClient
      * Cancels a message that has not gone yet. A scheduled one is removed
      * (null); a queued one is kept as failed, "Cancelled before it was sent."
      *
+     * The same endpoint deletes a sent message for everyone, so this first
+     * checks that the message is still waiting, and throws a
+     * ConflictException if it is not; use deleteMessage() for that.
+     *
      * @return array<string, mixed>|null
      */
     public function cancelMessage(string $id): ?array
+    {
+        $status = $this->message($id)['status'] ?? null;
+
+        if (! in_array($status, ['scheduled', 'queued'], true)) {
+            throw new ConflictException("This message is no longer waiting (it is {$status}), so it can no longer be cancelled.", 409);
+        }
+
+        $response = $this->call('delete', 'messages/'.rawurlencode($id));
+
+        return $response->status() === 204 ? null : $response->json('data');
+    }
+
+    /**
+     * Deletes a message your number sent, for everyone in the chat (within
+     * about two days of sending). A message still waiting is cancelled
+     * instead, as cancelMessage() does.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function deleteMessage(string $id): ?array
     {
         $response = $this->call('delete', 'messages/'.rawurlencode($id));
 
@@ -166,7 +191,8 @@ class ThreadwireClient
     }
 
     /**
-     * Starts a verification (a one-time code by WhatsApp).
+     * Starts a verification (a one-time code by WhatsApp). The verifications
+     * endpoints are new: these four follow their announced shape.
      *
      * @param  array<string, mixed>  $data  as POST /v1/verifications takes it (instance_id, to…)
      * @param  array{idempotency_key?: string}  $options
@@ -219,6 +245,7 @@ class ThreadwireClient
      */
     public function call(string $method, string $path, array $data = [], ?string $idempotencyKey = null): Response
     {
+        $method = strtolower($method);
         $request = $this->request();
 
         if ($idempotencyKey !== null) {
