@@ -1,0 +1,147 @@
+<?php
+
+use Illuminate\Http\Client\Factory;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
+use Threadwire\Exceptions\AuthenticationException;
+use Threadwire\Exceptions\ConflictException;
+use Threadwire\Exceptions\NotFoundException;
+use Threadwire\Exceptions\RateLimitedException;
+use Threadwire\Exceptions\ThreadwireException;
+use Threadwire\Exceptions\ValidationException;
+use Threadwire\Facades\Threadwire;
+use Threadwire\ThreadwireClient;
+
+/*
+ * The client: each method is one request to the Threadwire API, with the
+ * key, the idempotency key when given, and Threadwire's own reason when it
+ * refuses.
+ */
+
+const API = 'https://threadwire.test/api/v1';
+
+beforeEach(function () {
+    // One fake for the whole file, steered by this: what the API answers.
+    $this->answer = fn (Request $request) => Http::response(['data' => ['id' => 'msg_1', 'status' => 'queued']], 202);
+    Http::fake(fn (Request $request) => ($this->answer)($request));
+});
+
+function lastRequest(): Request
+{
+    return Http::recorded()->last()[0];
+}
+
+it('sends a text to a phone with the API key, and returns the queued message', function () {
+    $message = Threadwire::sendText('inst_1', '201012345678', 'Hi Sara, your order is on its way.');
+
+    expect($message)->toBe(['id' => 'msg_1', 'status' => 'queued'])
+        ->and(lastRequest())
+        ->url()->toBe(API.'/messages')
+        ->method()->toBe('POST')
+        ->data()->toBe(['instance_id' => 'inst_1', 'to' => '201012345678', 'text' => 'Hi Sara, your order is on its way.'])
+        ->and(lastRequest()->header('Authorization'))->toBe(['Bearer test-key'])
+        ->and(lastRequest()->header('Accept'))->toBe(['application/json'])
+        ->and(lastRequest()->hasHeader('Idempotency-Key'))->toBeFalse();
+});
+
+it('sends to a group or channel by its chat id, with an idempotency key and other fields', function () {
+    Threadwire::sendText('inst_1', '120363000000000000@g.us', 'Meeting at 5', ['idempotency_key' => 'meeting-5', 'link_preview' => false]);
+
+    expect(lastRequest()->data())->toBe(['instance_id' => 'inst_1', 'chat_id' => '120363000000000000@g.us', 'text' => 'Meeting at 5', 'link_preview' => false])
+        ->and(lastRequest()->header('Idempotency-Key'))->toBe(['meeting-5']);
+});
+
+it('sends files, places, contact cards and polls in the API\'s shape', function () {
+    Threadwire::sendMedia('inst_1', '201012345678', ['url' => 'https://shop.example/invoice.pdf', 'mimetype' => 'application/pdf', 'filename' => 'invoice.pdf'], 'Your invoice');
+    expect(lastRequest()->data())->toBe(['instance_id' => 'inst_1', 'to' => '201012345678', 'media' => ['url' => 'https://shop.example/invoice.pdf', 'mimetype' => 'application/pdf', 'filename' => 'invoice.pdf'], 'text' => 'Your invoice']);
+
+    Threadwire::sendLocation('inst_1', '201012345678', 30.0444, 31.2357, 'Our shop');
+    expect(lastRequest()->data()['location'])->toBe(['latitude' => 30.0444, 'longitude' => 31.2357, 'title' => 'Our shop']);
+
+    Threadwire::sendContact('inst_1', '201012345678', 'Support', '201000000009');
+    expect(lastRequest()->data()['contact'])->toBe(['name' => 'Support', 'phone' => '201000000009']);
+
+    Threadwire::sendPoll('inst_1', '201012345678', 'Pick a time', ['10:00', '14:00'], multipleAnswers: true);
+    expect(lastRequest()->data()['poll'])->toBe(['name' => 'Pick a time', 'options' => ['10:00', '14:00'], 'multiple_answers' => true]);
+});
+
+it('reads messages, numbers with their protection, and chats', function () {
+    $this->answer = fn (Request $request) => match (true) {
+        str_ends_with($request->url(), '/instances/inst_1') => Http::response(['data' => ['id' => 'inst_1', 'status' => 'working', 'protection' => ['new_contacts_left_today' => 7]]]),
+        default => Http::response(['data' => [['id' => 'x']], 'links' => ['next' => null], 'meta' => []]),
+    };
+
+    expect(Threadwire::instance('inst_1')['protection'])->toBe(['new_contacts_left_today' => 7])
+        ->and(Threadwire::instances())->toHaveKeys(['data', 'links', 'meta'])
+        ->and(lastRequest()->url())->toBe(API.'/instances');
+
+    Threadwire::chats(['instance_id' => 'inst_1', 'waiting' => 1]);
+    expect(lastRequest()->url())->toBe(API.'/chats?instance_id=inst_1&waiting=1');
+
+    Threadwire::messages(['phone' => '201012345678']);
+    expect(lastRequest()->url())->toBe(API.'/messages?phone=201012345678');
+
+    Threadwire::message('msg_1');
+    expect(lastRequest()->url())->toBe(API.'/messages/msg_1');
+});
+
+it('cancels a message: removed when scheduled, kept as failed when queued', function () {
+    $this->answer = fn () => Http::response(null, 204);
+    expect(Threadwire::cancelMessage('msg_1'))->toBeNull()
+        ->and(lastRequest()->method())->toBe('DELETE');
+
+    $this->answer = fn () => Http::response(['data' => ['id' => 'msg_2', 'status' => 'failed', 'error' => 'Cancelled before it was sent.']]);
+    expect(Threadwire::cancelMessage('msg_2'))->toMatchArray(['status' => 'failed']);
+});
+
+it('starts, reads, checks and resends a verification', function () {
+    $this->answer = fn () => Http::response(['data' => ['id' => 'ver_1', 'status' => 'pending', 'code' => '123456', 'link' => 'https://wa.me/201000000001?text=123456', 'expires_at' => '2026-10-04T10:10:00+00:00']], 201);
+
+    expect(Threadwire::createVerification(['instance_id' => 'inst_1', 'to' => '201012345678'], ['idempotency_key' => 'signup-42']))->toHaveKeys(['id', 'status', 'code', 'link', 'expires_at'])
+        ->and(lastRequest())->url()->toBe(API.'/verifications')->data()->toBe(['instance_id' => 'inst_1', 'to' => '201012345678'])
+        ->and(lastRequest()->header('Idempotency-Key'))->toBe(['signup-42']);
+
+    Threadwire::verification('ver_1');
+    expect(lastRequest())->url()->toBe(API.'/verifications/ver_1')->method()->toBe('GET');
+
+    Threadwire::checkVerification('ver_1', '123456');
+    expect(lastRequest())->url()->toBe(API.'/verifications/ver_1/check')->data()->toBe(['code' => '123456']);
+
+    Threadwire::resendVerification('ver_1');
+    expect(lastRequest())->url()->toBe(API.'/verifications/ver_1/resend')->method()->toBe('POST');
+});
+
+it('throws Threadwire\'s own reason, typed by status, with the fields and when to retry', function () {
+    $this->answer = fn () => Http::response(['message' => 'The number must be in international format with its country code, like 201012345678.', 'errors' => ['to' => ['The number must be in international format with its country code, like 201012345678.']]], 422);
+
+    try {
+        Threadwire::sendText('inst_1', '0101234', 'Hi');
+        $this->fail('No exception');
+    } catch (ValidationException $e) {
+        expect($e->getMessage())->toBe('The number must be in international format with its country code, like 201012345678.')
+            ->and($e->status)->toBe(422)
+            ->and($e->errors)->toHaveKey('to');
+    }
+
+    $this->answer = fn () => Http::response(['message' => 'Too many requests.'], 429, ['Retry-After' => '30']);
+    expect(fn () => Threadwire::chats())->toThrow(fn (RateLimitedException $e) => expect($e->retryAfter)->toBe(30)->and($e->getMessage())->toBe('Too many requests.'));
+
+    $this->answer = fn () => Http::response(['message' => 'This number is not connected.'], 409);
+    expect(fn () => Threadwire::sendText('inst_1', '201012345678', 'Hi'))->toThrow(ConflictException::class, 'This number is not connected.');
+
+    $this->answer = fn () => Http::response(['message' => 'Unauthenticated.'], 401);
+    expect(fn () => Threadwire::instances())->toThrow(AuthenticationException::class);
+
+    $this->answer = fn () => Http::response(['message' => 'Not found.'], 404);
+    expect(fn () => Threadwire::message('nope'))->toThrow(NotFoundException::class);
+
+    $this->answer = fn () => Http::response('Bad gateway', 502);
+    expect(fn () => Threadwire::instances())->toThrow(ThreadwireException::class, 'Threadwire answered 502.');
+});
+
+it('never sends a request without an API key', function () {
+    $client = new ThreadwireClient(app(Factory::class), null, API);
+
+    expect(fn () => $client->instances())->toThrow(AuthenticationException::class, 'No Threadwire API key: set THREADWIRE_API_KEY.');
+    Http::assertNothingSent();
+});
