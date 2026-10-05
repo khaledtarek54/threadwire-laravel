@@ -2,6 +2,14 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
+## 2.0.0 — unreleased
+
+Threadwire renamed "verification" to "OTP" across its API, so this release is not backwards compatible. The 1.x methods below call addresses that no longer exist.
+
+- `createVerification()`, `verification()`, `checkVerification()`, `resendVerification()` and `cancelVerification()` are now `createOtp()`, `otp()`, `checkOtp()`, `resendOtp()` and `cancelOtp()`; `sendVerificationCode()` is `sendOtpCode()`. `verifyByLink()` keeps its name.
+- The API paths are `/v1/otps…`, and the webhook events `otp.completed` and `otp.failed`, as `Threadwire\Events\OtpCompleted` and `Threadwire\Events\OtpFailed` (were `VerificationCompleted` and `VerificationFailed`).
+- A message's `origin` for a code is `otp` (was `verification`).
+
 ## 1.2.0 — 2026-10-05
 
 - Broadcasts: `Threadwire::createBroadcast()` (to everyone who wrote recently, a chat label, or your own list filtered to people who wrote, with placeholders), `broadcast()`, `broadcasts()`, `pauseBroadcast()`, `resumeBroadcast()` and `cancelBroadcast()`.

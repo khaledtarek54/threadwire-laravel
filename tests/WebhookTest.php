@@ -7,7 +7,7 @@ use Threadwire\Events\BroadcastPaused;
 use Threadwire\Events\InstanceStatusUpdated;
 use Threadwire\Events\MessageReceived;
 use Threadwire\Events\MessageStatusUpdated;
-use Threadwire\Events\VerificationCompleted;
+use Threadwire\Events\OtpCompleted;
 use Threadwire\Events\WebhookReceived;
 use Threadwire\Tests\TestCase;
 use Threadwire\Webhooks\WebhookSignature;
@@ -61,9 +61,9 @@ it('accepts a genuine event and dispatches it as its own Laravel event and as We
 });
 
 it('dispatches only WebhookReceived for a type it does not know yet', function () {
-    threadwireEvent('verification.verified', ['id' => 'ver_1'])->assertNoContent();
+    threadwireEvent('otp.verified', ['id' => 'ver_1'])->assertNoContent();
 
-    Event::assertDispatched(WebhookReceived::class, fn (WebhookReceived $event) => $event->type === 'verification.verified' && $event->data === ['id' => 'ver_1']);
+    Event::assertDispatched(WebhookReceived::class, fn (WebhookReceived $event) => $event->type === 'otp.verified' && $event->data === ['id' => 'ver_1']);
     Event::assertNotDispatched(MessageReceived::class);
 });
 
@@ -147,12 +147,12 @@ it('can be put on a route of your own with the threadwire.webhook middleware', f
     $this->call('POST', '/my/hooks', server: ['CONTENT_TYPE' => 'application/json'], content: $body)->assertUnauthorized();
 });
 
-it('turns a completed verification into its own event', function () {
+it('turns a completed OTP into its own event', function () {
     Event::fake();
 
-    threadwireEvent('verification.completed', ['id' => 'ver_1', 'reference' => 'signup-7', 'phone' => '201012345678'])->assertNoContent();
+    threadwireEvent('otp.completed', ['id' => 'ver_1', 'reference' => 'signup-7', 'phone' => '201012345678'])->assertNoContent();
 
-    Event::assertDispatched(VerificationCompleted::class, fn ($event) => $event->payload['data']['phone'] === '201012345678');
+    Event::assertDispatched(OtpCompleted::class, fn ($event) => $event->payload['data']['phone'] === '201012345678');
 });
 
 it('turns a broadcast pausing or finishing into its own event, with the reason', function () {

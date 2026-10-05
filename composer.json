@@ -10,7 +10,7 @@
         "laravel",
         "laravel-package",
         "otp",
-        "phone-verification",
+        "whatsapp-otp",
         "webhooks",
         "standard-webhooks"
     ],

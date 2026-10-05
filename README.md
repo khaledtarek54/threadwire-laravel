@@ -90,32 +90,32 @@ do {
 } while ($page['has_more']);
 ```
 
-### Verify with WhatsApp
+### WhatsApp OTP
 
 Prove someone holds a WhatsApp number, for a sign-up or a password-free sign-in. Use the link unless you must send the code yourself: the person sends you the code, so your number only replies (the safest message there is, with no night hours or daily limit).
 
 ```php
 // 1. The link (recommended)
-$verification = Threadwire::verifyByLink($numberId, ['brand' => 'Acme', 'reference' => 'signup-7', 'phone' => $phone]);
-// show $verification['link'] as a button (or $verification['qr'] on a computer), $verification['code'] as a fallback
+$otp = Threadwire::verifyByLink($numberId, ['brand' => 'Acme', 'reference' => 'signup-7', 'phone' => $phone]);
+// show $otp['link'] as a button (or $otp['qr'] on a computer), $otp['code'] as a fallback
 
 // then, in a listener:
-Event::listen(\Threadwire\Events\VerificationCompleted::class, function ($event) {
+Event::listen(\Threadwire\Events\OtpCompleted::class, function ($event) {
     $phone = $event->payload['data']['phone'];   // sign in by this; never by a null phone
 });
 
 // 2. A code your number sends
-$verification = Threadwire::sendVerificationCode($numberId, '201012345678', ['brand' => 'Acme']);
+$otp = Threadwire::sendOtpCode($numberId, '201012345678', ['brand' => 'Acme']);
 
 try {
-    Threadwire::checkVerification($verification['id'], $request->input('code'));   // status: verified
+    Threadwire::checkOtp($otp['id'], $request->input('code'));   // status: verified
 } catch (\Threadwire\Exceptions\ValidationException $e) {
     $e->attemptsLeft();   // wrong code; after the fifth it fails
 }
 
-Threadwire::verification($verification['id']);       // status, phone, attempts left; never the code
-Threadwire::resendVerification($verification['id']);
-Threadwire::cancelVerification($verification['id']);
+Threadwire::otp($otp['id']);       // status, phone, attempts left; never the code
+Threadwire::resendOtp($otp['id']);
+Threadwire::cancelOtp($otp['id']);
 ```
 
 ### Broadcasts

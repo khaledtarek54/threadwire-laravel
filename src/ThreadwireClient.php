@@ -14,7 +14,7 @@ use Threadwire\Exceptions\ThreadwireException;
  * one request; nothing is retried by itself, since retrying a send could
  * send it twice (pass an idempotency_key to make a retry safe).
  *
- * Single items (a message, a number, a verification) come back as the
+ * Single items (a message, a number, an OTP) come back as the
  * array under "data"; lists come back whole ("data" plus "links" and
  * "meta" to page through). A refusal throws a ThreadwireException with
  * Threadwire's reason in plain words.
@@ -218,73 +218,73 @@ class ThreadwireClient
     }
 
     /**
-     * Verify with WhatsApp, the recommended way: the person sends you the
+     * WhatsApp OTP, the recommended way: the person sends you the
      * code from the number they claim, so your number only ever replies.
      * Show `link` as a button on a phone (or `qr` on a computer), with `code`
-     * as a fallback; a `verification.completed` webhook brings the phone.
+     * as a fallback; an `otp.completed` webhook brings the phone.
      *
      * @param  array{phone?: string, brand?: string, reference?: string, locale?: string, expires_in?: int, idempotency_key?: string}  $options
      * @return array<string, mixed> id, status, code, link, qr, expires_at
      */
     public function verifyByLink(string $instanceId, array $options = []): array
     {
-        return $this->createVerification(['instance_id' => $instanceId, 'channel' => 'link', ...array_diff_key($options, ['idempotency_key' => true])], array_intersect_key($options, ['idempotency_key' => true]));
+        return $this->createOtp(['instance_id' => $instanceId, 'channel' => 'link', ...array_diff_key($options, ['idempotency_key' => true])], array_intersect_key($options, ['idempotency_key' => true]));
     }
 
     /**
-     * Verify with WhatsApp by a code your number sends; check what the person
-     * types with checkVerification(). It never waits: if it cannot go at once
-     * (night hours, the day's limit), the verification fails with the reason.
+     * WhatsApp OTP by a code your number sends; check what the person
+     * types with checkOtp(). It never waits: if it cannot go at once
+     * (night hours, the day's limit), the OTP fails with the reason.
      *
      * @param  array{brand?: string, code_length?: int, reference?: string, locale?: string, expires_in?: int, idempotency_key?: string}  $options
      * @return array<string, mixed> id, status, expires_at (never the code)
      */
-    public function sendVerificationCode(string $instanceId, string $phone, array $options = []): array
+    public function sendOtpCode(string $instanceId, string $phone, array $options = []): array
     {
-        return $this->createVerification(['instance_id' => $instanceId, 'channel' => 'code', 'phone' => $phone, ...array_diff_key($options, ['idempotency_key' => true])], array_intersect_key($options, ['idempotency_key' => true]));
+        return $this->createOtp(['instance_id' => $instanceId, 'channel' => 'code', 'phone' => $phone, ...array_diff_key($options, ['idempotency_key' => true])], array_intersect_key($options, ['idempotency_key' => true]));
     }
 
     /**
-     * Starts a verification with the fields as POST /v1/verifications takes
+     * Starts an OTP with the fields as POST /v1/otps takes
      * them (instance_id, channel "link" or "code", phone…).
      *
      * @param  array<string, mixed>  $data
      * @param  array{idempotency_key?: string}  $options
      * @return array<string, mixed>
      */
-    public function createVerification(array $data, array $options = []): array
+    public function createOtp(array $data, array $options = []): array
     {
-        return $this->data('post', 'verifications', $data, $options['idempotency_key'] ?? null);
+        return $this->data('post', 'otps', $data, $options['idempotency_key'] ?? null);
     }
 
-    /** Cancels a pending verification; a code not sent yet is not sent. */
-    public function cancelVerification(string $id): void
+    /** Cancels a pending OTP; a code not sent yet is not sent. */
+    public function cancelOtp(string $id): void
     {
-        $this->call('delete', 'verifications/'.rawurlencode($id));
+        $this->call('delete', 'otps/'.rawurlencode($id));
     }
 
     /** @return array<string, mixed> */
-    public function verification(string $id): array
+    public function otp(string $id): array
     {
-        return $this->data('get', 'verifications/'.rawurlencode($id));
+        return $this->data('get', 'otps/'.rawurlencode($id));
     }
 
     /**
-     * Checks the code the person typed: the verification, `verified`. A wrong
+     * Checks the code the person typed: the OTP, `verified`. A wrong
      * code throws a ValidationException ($e->attemptsLeft()); one that is
      * expired, failed or used throws a ConflictException.
      *
      * @return array<string, mixed>
      */
-    public function checkVerification(string $id, string $code): array
+    public function checkOtp(string $id, string $code): array
     {
-        return $this->data('post', 'verifications/'.rawurlencode($id).'/check', ['code' => $code]);
+        return $this->data('post', 'otps/'.rawurlencode($id).'/check', ['code' => $code]);
     }
 
     /** @return array<string, mixed> */
-    public function resendVerification(string $id): array
+    public function resendOtp(string $id): array
     {
-        return $this->data('post', 'verifications/'.rawurlencode($id).'/resend');
+        return $this->data('post', 'otps/'.rawurlencode($id).'/resend');
     }
 
     /**
