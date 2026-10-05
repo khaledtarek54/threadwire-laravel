@@ -2,7 +2,7 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
-## 2.0.0 — unreleased
+## 2.0.0 — 2026-10-05
 
 Threadwire renamed "verification" to "OTP" across its API, so this release is not backwards compatible. The 1.x methods below call addresses that no longer exist.
 
