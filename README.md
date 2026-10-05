@@ -29,7 +29,7 @@ In `.env`:
 
 ```dotenv
 THREADWIRE_API_KEY=your-api-key            # Developers → API keys in your panel
-THREADWIRE_WEBHOOK_SECRET=whsec_...        # Webhooks → Signing secret
+THREADWIRE_WEBHOOK_SECRET=whsec_...        # Developers → Webhooks → Signing secret
 # THREADWIRE_URL=https://threadwire.tri-tech.net/api/v1   (the default)
 # THREADWIRE_WEBHOOK_PATH=threadwire/webhook              (the default)
 ```
@@ -38,7 +38,7 @@ To change more, publish the config: `php artisan vendor:publish --tag=threadwire
 
 ## Send
 
-Each number has an id (`instance_id`), shown on its page in your panel. Send to a phone in international format, or to a group's or channel's `chat_id`:
+Each linked number is an instance, with an id (`instance_id`): the "Instance ID" on its page in your panel, under Instances. Send to a phone in international format, or to a group's or channel's `chat_id`:
 
 ```php
 use Threadwire\Facades\Threadwire;
@@ -168,7 +168,7 @@ WhatsApp bans numbers that behave like bots, so Threadwire sends the way a perso
 
 ## Receive webhooks
 
-Set your webhook URL in the Threadwire panel (Webhooks → Set webhook URL) to `https://your-app.example/threadwire/webhook`. The package registers that route, outside the `web` group (no session, no CSRF token), and lets through only events signed with your secret within the last 5 minutes; anything else gets 401.
+Set your webhook URL in the Threadwire panel (Developers → Webhooks → Set webhook URL, admins only) to `https://your-app.example/threadwire/webhook`. The package registers that route, outside the `web` group (no session, no CSRF token), and lets through only events signed with your secret within the last 5 minutes; anything else gets 401.
 
 Each event is dispatched as a Laravel event: `Threadwire\Events\WebhookReceived` for every event, and one for its type:
 
