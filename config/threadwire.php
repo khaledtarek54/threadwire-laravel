@@ -6,7 +6,7 @@ return [
     'api_key' => env('THREADWIRE_API_KEY'),
 
     // The API's address, up to and including /v1.
-    'url' => env('THREADWIRE_URL', 'https://threadwire.tri-tech.net/api/v1'),
+    'url' => env('THREADWIRE_URL', 'https://threadwire.net/api/v1'),
 
     // Seconds to wait for an answer. Sends are answered at once (202) and
     // go out later, paced, so this never needs to cover a send itself.

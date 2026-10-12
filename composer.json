@@ -14,11 +14,11 @@
         "webhooks",
         "standard-webhooks"
     ],
-    "homepage": "https://threadwire.tri-tech.net",
+    "homepage": "https://threadwire.net",
     "support": {
         "issues": "https://github.com/khaledtarek54/threadwire-laravel/issues",
         "source": "https://github.com/khaledtarek54/threadwire-laravel",
-        "docs": "https://threadwire.tri-tech.net/docs/api"
+        "docs": "https://threadwire.net/docs/api"
     },
     "authors": [
         {

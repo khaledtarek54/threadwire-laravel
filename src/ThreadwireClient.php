@@ -24,7 +24,7 @@ class ThreadwireClient
     public function __construct(
         private readonly Factory $http,
         private readonly ?string $apiKey,
-        private readonly string $url = 'https://threadwire.tri-tech.net/api/v1',
+        private readonly string $url = 'https://threadwire.net/api/v1',
         private readonly int $timeout = 30,
     ) {}
 

@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/packagist/dt/tritech/threadwire-laravel)](https://packagist.org/packages/tritech/threadwire-laravel)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-The official Laravel package for [Threadwire](https://threadwire.tri-tech.net), the WhatsApp API that keeps your numbers safe.
+The official Laravel package for [Threadwire](https://threadwire.net), the WhatsApp API that keeps your numbers safe.
 
 - **Send** texts, files, locations, contact cards and polls from your own linked WhatsApp numbers, to a person or a group, in one line.
 - **Broadcasts**: one message to many people who wrote to you, each sent on its own, paced, with an opt-out line, pausing by itself if the number is at risk.
@@ -13,7 +13,7 @@ The official Laravel package for [Threadwire](https://threadwire.tri-tech.net), 
 - **Receive webhooks as Laravel events**: replies, delivery and read receipts, reactions and more, with the signature checked for you.
 - **Protected by default**: every message goes through Threadwire's pacing, warm-up and daily limits, so a number is far less likely to be banned. A message that would put the number at risk is held or refused, with the reason.
 
-Requires PHP 8.2+ and Laravel 12 or 13, and a [Threadwire](https://threadwire.tri-tech.net) account (7 days free).
+Requires PHP 8.2+ and Laravel 12 or 13, and a [Threadwire](https://threadwire.net) account (7 days free).
 
 ## Install
 
@@ -30,7 +30,7 @@ In `.env`:
 ```dotenv
 THREADWIRE_API_KEY=your-api-key            # Developers → API keys in your panel
 THREADWIRE_WEBHOOK_SECRET=whsec_...        # Developers → Webhooks → Signing secret
-# THREADWIRE_URL=https://threadwire.tri-tech.net/api/v1   (the default)
+# THREADWIRE_URL=https://threadwire.net/api/v1   (the default)
 # THREADWIRE_WEBHOOK_PATH=threadwire/webhook              (the default)
 ```
 
@@ -140,7 +140,7 @@ Threadwire::cancelBroadcast($broadcast['id']);
 
 Listen for `Threadwire\Events\BroadcastPaused` (with `reason.code` and `reason.text`) and `Threadwire\Events\BroadcastCompleted`.
 
-Anything else in the API: `Threadwire::json('get', 'instances/'.$numberId.'/groups')`, or `Threadwire::call(...)` for the raw response. Single items come back as the array under `data`; lists come back whole (`data`, `links`, `meta`). The full reference is at <https://threadwire.tri-tech.net/docs/api>.
+Anything else in the API: `Threadwire::json('get', 'instances/'.$numberId.'/groups')`, or `Threadwire::call(...)` for the raw response. Single items come back as the array under `data`; lists come back whole (`data`, `links`, `meta`). The full reference is at <https://threadwire.net/docs/api>.
 
 ## When Threadwire says no
 
@@ -218,7 +218,7 @@ class AnswerCustomer implements ShouldQueue
 Fake Threadwire with Laravel's own `Http::fake()`:
 
 ```php
-Http::fake(['threadwire.tri-tech.net/*' => Http::response(['data' => ['id' => 'msg_1', 'status' => 'queued']], 202)]);
+Http::fake(['threadwire.net/*' => Http::response(['data' => ['id' => 'msg_1', 'status' => 'queued']], 202)]);
 ```
 
 ## Developing the package (maintainers)

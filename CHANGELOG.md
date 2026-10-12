@@ -2,6 +2,10 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
+## 2.0.1 — 2026-10-12
+
+- Threadwire's address is `threadwire.net`: the default `THREADWIRE_URL` is now `https://threadwire.net/api/v1`. The former address, `https://threadwire.tri-tech.net/api/v1`, keeps answering with the same keys, so nothing changes for an app that sets it or stays on 2.0.0.
+
 ## 2.0.0 — 2026-10-05
 
 Threadwire renamed "verification" to "OTP" across its API, so this release is not backwards compatible. The 1.x methods below call addresses that no longer exist.
