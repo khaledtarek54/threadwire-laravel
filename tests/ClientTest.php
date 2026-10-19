@@ -100,6 +100,9 @@ it('polls for events after a cursor, until there are no more', function () {
     Threadwire::chatHistory('inst_1', '201012345678', ['limit' => 20]);
     expect(lastRequest()->url())->toBe(API.'/instances/inst_1/chats/201012345678/history?limit=20');
 
+    Threadwire::sendText('inst_1', '120363000000000000@g.us', 'Meeting at 5', ['mentions' => ['201012345678']]);
+    expect(lastRequest()->data())->toBe(['instance_id' => 'inst_1', 'chat_id' => '120363000000000000@g.us', 'text' => 'Meeting at 5', 'mentions' => ['201012345678']]);
+
     Threadwire::typing('inst_1', '201012345678', 'recording', 8);
     expect(lastRequest()->url())->toBe(API.'/instances/inst_1/chats/201012345678/typing')
         ->and(lastRequest()->data())->toBe(['state' => 'recording', 'seconds' => 8]);

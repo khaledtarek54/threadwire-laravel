@@ -55,6 +55,7 @@ Threadwire::sendLocation($numberId, '201012345678', 30.0444, 31.2357, 'Our shop'
 Threadwire::sendContact($numberId, '201012345678', 'Support', '201000000009');
 Threadwire::sendPoll($numberId, '201012345678', 'Which time suits you?', ['10:00', '14:00']);
 Threadwire::sendText($numberId, '120363000000000000@g.us', 'Meeting at 5');    // a group
+Threadwire::sendText($numberId, '120363000000000000@g.us', 'Meeting at 5', ['mentions' => ['201012345678']]); // mentioning someone in it
 
 // Any other field of POST /v1/messages goes in the options too:
 Threadwire::sendText($numberId, '201012345678', 'See you tomorrow', ['reply_to' => $messageId, 'send_at' => '2026-10-05T09:00:00+03:00']);
