@@ -11,7 +11,7 @@ The official Laravel package for [Threadwire](https://threadwire.net), the Whats
 - **Broadcasts**: one message to many people who wrote to you, each sent on its own, paced, with an opt-out line, pausing by itself if the number is at risk.
 - **Verify phone numbers with WhatsApp**: a one-tap link where the person sends you the code (the safest message there is), or a classic code.
 - **Receive webhooks as Laravel events**: replies, delivery and read receipts, reactions and more, with the signature checked for you.
-- **Protected by default**: every message goes through Threadwire's pacing, warm-up and daily limits, so a number is far less likely to be banned. A message that would put the number at risk is held or refused, with the reason.
+- **Protection you can turn on**: with a number's sending protection on, every message goes through Threadwire's pacing, warm-up and daily limits, so the number is far less likely to be banned, and a message that would put it at risk is held or refused, with the reason. It is off until you turn it on for each number (below).
 
 Requires PHP 8.2+ and Laravel 12 or 13, and a [Threadwire](https://threadwire.net) account (7 days free).
 
@@ -144,7 +144,7 @@ Anything else in the API: `Threadwire::json('get', 'instances/'.$numberId.'/grou
 
 ## When Threadwire says no
 
-A refusal throws a `Threadwire\Exceptions\ThreadwireException`. Its message is Threadwire's own reason, in plain words, fit to show or log. A subclass names the common cases:
+A refusal throws a `Threadwire\Exceptions\ThreadwireException`. Its message is Threadwire's own reason, in plain words, fit to show or log. `$e->errorCode` is Threadwire's fixed `code` for it (`not_connected`, `limit_reached`, `backlog_full`…): act on that in your code, since the words may change and the code never does. The codes are listed at <https://threadwire.net/docs/guides/waiting#the-apis-error-codes>. A subclass names the common cases:
 
 | Exception | Status | What to do |
 |---|---|---|
@@ -159,12 +159,20 @@ A network failure is Laravel's own `Illuminate\Http\Client\ConnectionException`.
 
 ## Protecting your numbers
 
-WhatsApp bans numbers that behave like bots, so Threadwire sends the way a person would, and some messages wait or are refused:
+WhatsApp bans numbers that behave like bots. Threadwire's sending protection makes a number send the way a person would, and holds or refuses what would put it at risk. **It is off until you turn it on, for each number:** on its Protection tab in your panel, or from your app:
 
-- A send is answered at once (`queued`) and goes out paced. A message may wait its turn, or be **refused with a reason**: it then ends `failed` with the reason in `error`, in a `message.status` webhook and in `Threadwire::message($id)`.
+```php
+Threadwire::json('patch', 'instances/'.$numberId, ['protection_settings' => ['enabled' => true]]);
+```
+
+Off, messages still show "typing…" first, a long queue is slowed, and opt-outs, WhatsApp's own limits and the caps on groups, channels and broadcasts still apply. With it on:
+
+- A send is answered at once (`queued`) and goes out paced. A message may wait its turn, or be **refused with a reason**: it then ends `failed` with the reason in `error` (and a fixed `error_code`), in a `message.status` webhook and in `Threadwire::message($id)`.
 - **Never send a refused message again in a loop.** The reason says what to do instead ("Try again tomorrow", "let them write first"); a loop only makes WhatsApp trust the number less.
-- Replies to people who wrote in the last day go within seconds. Messages to people who never wrote are limited each day, so let people write first: each number's `chat_link` (in `Threadwire::instance()`) opens a chat with it.
+- Replies to people who wrote in the last day go within seconds. Messages to people who never wrote are limited each day and not sent at night, so let people write first: each number's `chat_link` (in `Threadwire::instance()`) opens a chat with it.
 - `Threadwire::instance($id)['protection']` shows where a number stands today.
+
+The rules and your own settings: <https://threadwire.net/docs/guides/protection>.
 
 ## Receive webhooks
 
@@ -200,7 +208,7 @@ class AnswerCustomer implements ShouldQueue
             return;
         }
 
-        $phone = $event->data['phone'];
+        $phone = $event->data['phone'];   // null when WhatsApp hid the number: reply with ['chat_id' => $event->data['chat_id']]
         $text = $event->data['body'];
         // ...
     }

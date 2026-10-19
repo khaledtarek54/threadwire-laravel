@@ -135,7 +135,7 @@ class ThreadwireClient
         $status = $this->message($id)['status'] ?? null;
 
         if (! in_array($status, ['scheduled', 'queued'], true)) {
-            throw new ConflictException("This message is no longer waiting (it is {$status}), so it can no longer be cancelled.", 409);
+            throw new ConflictException("This message is no longer waiting (it is {$status}), so it can no longer be cancelled.", 409, errorCode: 'conflict');
         }
 
         $response = $this->call('delete', 'messages/'.rawurlencode($id));
@@ -407,7 +407,7 @@ class ThreadwireClient
     private function request(): PendingRequest
     {
         if (blank($this->apiKey)) {
-            throw new AuthenticationException('No Threadwire API key: set THREADWIRE_API_KEY.', 401);
+            throw new AuthenticationException('No Threadwire API key: set THREADWIRE_API_KEY.', 401, errorCode: 'unauthenticated');
         }
 
         return $this->http

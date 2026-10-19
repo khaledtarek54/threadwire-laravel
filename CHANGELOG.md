@@ -2,6 +2,11 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+- `ThreadwireException::$errorCode`: Threadwire's fixed `code` for a refusal (`not_connected`, `limit_reached`, `backlog_full`…), beside the message, on every exception the package throws. Nothing else changes.
+- The README says what is true since Threadwire made sending protection a per-number choice: it is off until you turn it on (`protection_settings.enabled`).
+
 ## 2.0.1 — 2026-10-12
 
 - Threadwire's address is `threadwire.net`: the default `THREADWIRE_URL` is now `https://threadwire.net/api/v1`. The former address, `https://threadwire.tri-tech.net/api/v1`, keeps answering with the same keys, so nothing changes for an app that sets it or stays on 2.0.0.

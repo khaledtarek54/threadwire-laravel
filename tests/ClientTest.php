@@ -179,8 +179,9 @@ it('throws Threadwire\'s own reason, typed by status, with the fields and when t
     $this->answer = fn () => Http::response(['message' => 'Too many requests.'], 429, ['Retry-After' => '30']);
     expect(fn () => Threadwire::chats())->toThrow(fn (RateLimitedException $e) => expect($e->retryAfter)->toBe(30)->and($e->getMessage())->toBe('Too many requests.'));
 
-    $this->answer = fn () => Http::response(['message' => 'This number is not connected.'], 409);
-    expect(fn () => Threadwire::sendText('inst_1', '201012345678', 'Hi'))->toThrow(ConflictException::class, 'This number is not connected.');
+    $this->answer = fn () => Http::response(['message' => 'This number is not connected.', 'code' => 'not_connected'], 409);
+    expect(fn () => Threadwire::sendText('inst_1', '201012345678', 'Hi'))->toThrow(ConflictException::class, 'This number is not connected.')
+        ->and(fn () => Threadwire::sendText('inst_1', '201012345678', 'Hi'))->toThrow(fn (ConflictException $e) => expect($e->errorCode)->toBe('not_connected'));
 
     $this->answer = fn () => Http::response(['message' => 'Unauthenticated.'], 401);
     expect(fn () => Threadwire::instances())->toThrow(AuthenticationException::class);
@@ -189,7 +190,8 @@ it('throws Threadwire\'s own reason, typed by status, with the fields and when t
     expect(fn () => Threadwire::message('nope'))->toThrow(NotFoundException::class);
 
     $this->answer = fn () => Http::response('Bad gateway', 502);
-    expect(fn () => Threadwire::instances())->toThrow(ThreadwireException::class, 'Threadwire answered 502.');
+    expect(fn () => Threadwire::instances())->toThrow(ThreadwireException::class, 'Threadwire answered 502.')
+        ->and(fn () => Threadwire::instances())->toThrow(fn (ThreadwireException $e) => expect($e->errorCode)->toBeNull());
 });
 
 it('starts a broadcast to recent chats, a label or a list of phones and people, with an idempotency key', function () {
