@@ -146,6 +146,21 @@ class ThreadwireClient
     }
 
     /**
+     * Forwards a message one of your numbers sent or received, marked
+     * "Forwarded": to someone who has written to that number (a phone, or
+     * their chat id), or a group it is in. Sent like any message.
+     *
+     * @param  array<string, mixed>  $options  idempotency_key
+     * @return array<string, mixed> the new message
+     */
+    public function forward(string $id, string $to, array $options = []): array
+    {
+        $recipient = str_contains($to, '@') ? ['chat_id' => $to] : ['to' => $to];
+
+        return $this->data('post', 'messages/'.rawurlencode($id).'/forward', $recipient, $options['idempotency_key'] ?? null);
+    }
+
+    /**
      * Deletes a message your number sent, for everyone in the chat (within
      * about two days of sending). A message still waiting is cancelled
      * instead, as cancelMessage() does.

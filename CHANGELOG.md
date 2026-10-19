@@ -2,6 +2,10 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
+## 2.3.0 — 2026-10-19
+
+- `forward()`: forwards a message, marked "Forwarded", to someone who has written to the number or a group it is in (`POST /v1/messages/{id}/forward`).
+
 ## 2.2.1 — 2026-10-19
 
 - The README shows mentions in a group: `sendText($id, $groupChatId, $text, ['mentions' => [...]])`. Nothing in the code changes: options go to the API as they are.
