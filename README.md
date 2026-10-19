@@ -49,7 +49,8 @@ $message = Threadwire::sendText($numberId, '201012345678', 'Hi Sara, your order 
 
 $message['status'];   // "queued": what happens next arrives by webhook (message.status)
 
-Threadwire::sendMedia($numberId, '201012345678', ['url' => 'https://shop.example/invoice-1042.pdf', 'mimetype' => 'application/pdf', 'filename' => 'invoice-1042.pdf'], 'Your invoice');
+Threadwire::sendMedia($numberId, '201012345678', ['url' => 'https://shop.example/invoice-1042.pdf'], 'Your invoice'); // its type is worked out
+Threadwire::typing($numberId, '201012345678', seconds: 8); // "typing…" while you prepare the answer
 Threadwire::sendLocation($numberId, '201012345678', 30.0444, 31.2357, 'Our shop');
 Threadwire::sendContact($numberId, '201012345678', 'Support', '201000000009');
 Threadwire::sendPoll($numberId, '201012345678', 'Which time suits you?', ['10:00', '14:00']);

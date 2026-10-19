@@ -2,6 +2,11 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
+## 2.2.0 — 2026-10-19
+
+- `typing()`: shows "typing…" or "recording…" in a chat while you prepare an answer (`POST /v1/instances/{id}/chats/{phone}/typing`).
+- `sendMedia()` no longer needs a `mimetype`: Threadwire works the type out from the file. Give one only to choose how it shows.
+
 ## 2.1.0 — 2026-10-19
 
 - `ThreadwireException::$errorCode`: Threadwire's fixed `code` for a refusal (`not_connected`, `limit_reached`, `backlog_full`…), beside the message, on every exception the package throws. Nothing else changes.

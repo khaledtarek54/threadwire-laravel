@@ -42,9 +42,11 @@ class ThreadwireClient
     }
 
     /**
-     * Sends a file: an image, video, voice note or document.
+     * Sends a file: an image, video, voice note or document. Its type is
+     * worked out from the file; give a mimetype only to choose how it shows
+     * (application/pdf sends a photo as a document).
      *
-     * @param  array{url?: string, data?: string, mimetype: string, filename?: string}  $media  by public url, or base64 data
+     * @param  array{url?: string, data?: string, mimetype?: string, filename?: string}  $media  by public url, or base64 data
      * @param  array<string, mixed>  $options
      * @return array<string, mixed>
      */
@@ -200,6 +202,16 @@ class ThreadwireClient
     public function chatHistory(string $instanceId, string $phone, array $query = []): array
     {
         return $this->json('get', 'instances/'.rawurlencode($instanceId).'/chats/'.rawurlencode($phone).'/history', $query);
+    }
+
+    /**
+     * Shows "typing…" (or 'recording' before a voice note) in a chat the
+     * number already has, while you prepare an answer: for 1 to 20 seconds,
+     * or until your message goes. 'paused' stops it now.
+     */
+    public function typing(string $instanceId, string $phone, string $state = 'typing', ?int $seconds = null): void
+    {
+        $this->call('post', 'instances/'.rawurlencode($instanceId).'/chats/'.rawurlencode($phone).'/typing', array_filter(['state' => $state, 'seconds' => $seconds], fn ($value) => $value !== null));
     }
 
     /**

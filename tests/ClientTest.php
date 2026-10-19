@@ -99,6 +99,13 @@ it('polls for events after a cursor, until there are no more', function () {
 
     Threadwire::chatHistory('inst_1', '201012345678', ['limit' => 20]);
     expect(lastRequest()->url())->toBe(API.'/instances/inst_1/chats/201012345678/history?limit=20');
+
+    Threadwire::typing('inst_1', '201012345678', 'recording', 8);
+    expect(lastRequest()->url())->toBe(API.'/instances/inst_1/chats/201012345678/typing')
+        ->and(lastRequest()->data())->toBe(['state' => 'recording', 'seconds' => 8]);
+
+    Threadwire::sendMedia('inst_1', '201012345678', ['url' => 'https://shop.example/photo']);
+    expect(lastRequest()->data()['media'])->toBe(['url' => 'https://shop.example/photo']);
 });
 
 it('cancels a message: removed when scheduled, kept as failed when queued', function () {
