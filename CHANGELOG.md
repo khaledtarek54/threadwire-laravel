@@ -2,6 +2,10 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
+## 2.3.1 — 2026-10-19
+
+- The README shows the new `messages()` filters: `chat_id` (a group's too), `status`, `since` and `until`. Nothing in the code changes.
+
 ## 2.3.0 — 2026-10-19
 
 - `forward()`: forwards a message, marked "Forwarded", to someone who has written to the number or a group it is in (`POST /v1/messages/{id}/forward`).

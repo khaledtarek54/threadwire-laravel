@@ -67,6 +67,7 @@ Read and cancel:
 ```php
 Threadwire::message($id);                           // its status, and the reason in "error" if it failed
 Threadwire::messages(['phone' => '201012345678']);  // newest first; "links.next" for older ones
+Threadwire::messages(['chat_id' => '120363000000000000@g.us', 'status' => 'failed', 'since' => '2026-10-19T00:00:00+03:00']); // one chat, by status and time
 Threadwire::cancelMessage($id);                     // only while it waits: null when it was scheduled; a ConflictException once it went
 Threadwire::deleteMessage($id);                     // a sent message, deleted for everyone in the chat (within about two days)
 Threadwire::instances();                            // your numbers
