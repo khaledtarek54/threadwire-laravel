@@ -2,7 +2,7 @@
 
 All notable changes to this package are listed here. It follows [Semantic Versioning](https://semver.org).
 
-## Unreleased
+## 2.1.0 — 2026-10-19
 
 - `ThreadwireException::$errorCode`: Threadwire's fixed `code` for a refusal (`not_connected`, `limit_reached`, `backlog_full`…), beside the message, on every exception the package throws. Nothing else changes.
 - The README says what is true since Threadwire made sending protection a per-number choice: it is off until you turn it on (`protection_settings.enabled`).
